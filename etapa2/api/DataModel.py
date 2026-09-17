@@ -1,11 +1,21 @@
-from pydantic import BaseModel
-from typing import List
+from typing import List, Literal
 
-# Modelo de entrada para predicción
+from pydantic import BaseModel, Field
+
+
 class PredictionInput(BaseModel):
-    texts: List[str]
+    """Textos en español a clasificar."""
 
-# Modelo de entrada para reentrenamiento
+    texts: List[str] = Field(..., min_length=1, examples=[["El acceso a la educación primaria aumentó un 12%."]])
+
+
 class RetrainInput(BaseModel):
-    texts: List[str]
-    labels: List[int]
+    """
+    Ejemplos etiquetados para reentrenar.
+
+    `labels` está restringido a las clases conocidas: una etiqueta fuera de
+    {3, 4, 5} se rechaza en la validación en lugar de corromper el modelo.
+    """
+
+    texts: List[str] = Field(..., min_length=1)
+    labels: List[Literal[3, 4, 5]] = Field(..., min_length=1)

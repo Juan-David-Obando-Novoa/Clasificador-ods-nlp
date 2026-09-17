@@ -20,16 +20,25 @@ const ManualOpinionForm = ({
   const [textInput, setTextInput] = useState('')
   const [showOpinions, setShowOpinions] = useState(true)
 
+  // Al cambiar la lista de opiniones, los resultados anteriores dejan de
+  // corresponder con ella: hay mas (o menos) opiniones que predicciones.
+  // Se descartan y se vuelve a la vista de edicion.
+  const resetResults = () => {
+    clearResults()
+    setShowOpinions(true)
+  }
+
   const addOpinion = () => {
     if (textInput.trim() !== '') {
       setOpinions([...opinions, textInput])
       setTextInput('')
+      resetResults()
     }
   }
 
   const deleteOpinion = (index) => {
-    const newOpinions = opinions.filter((_, i) => i !== index)
-    setOpinions(newOpinions)
+    setOpinions(opinions.filter((_, i) => i !== index))
+    resetResults()
   }
 
   const handlePredict = () => {

@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "file": "modelo_v1.joblib",
+  "f1_macro_holdout": 0.9804,
+  "f1_macro_cv": 0.9811,
+  "n_train": 3239,
+  "trained_at": "2026-09-17T23:07:44+00:00"
+}
