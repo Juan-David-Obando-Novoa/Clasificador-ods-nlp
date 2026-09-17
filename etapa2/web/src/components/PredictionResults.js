@@ -16,19 +16,30 @@ const PredictionResults = ({ results, opinions }) => {
   const [currentPage, setCurrentPage] = useState(1)
   const [expandedOpinions, setExpandedOpinions] = useState({})
 
-  const totalPages = Math.ceil(opinions.length / itemsPerPage)
+  const predictions = results?.predictions ?? []
+  const probabilities = results?.probabilities ?? []
+  // Las clases las informa la API; antes estaban fijas como i + 3.
+  const classes = results?.classes ?? [3, 4, 5]
+
+  // Solo se muestran las opiniones que tienen prediccion. Si la lista cambio
+  // despues de predecir, no se intenta leer un indice que no existe.
+  const shownOpinions = opinions.slice(0, predictions.length)
+  const totalPages = Math.ceil(shownOpinions.length / itemsPerPage)
 
   const handlePageChange = (page) => {
     setCurrentPage(page)
   }
 
   const startIndex = (currentPage - 1) * itemsPerPage
-  const selectedOpinions = opinions.slice(startIndex, startIndex + itemsPerPage)
-  const selectedPredictions = results.predictions.slice(
+  const selectedOpinions = shownOpinions.slice(
     startIndex,
     startIndex + itemsPerPage
   )
-  const selectedProbabilities = results.probabilities.slice(
+  const selectedPredictions = predictions.slice(
+    startIndex,
+    startIndex + itemsPerPage
+  )
+  const selectedProbabilities = probabilities.slice(
     startIndex,
     startIndex + itemsPerPage
   )
@@ -117,7 +128,7 @@ const PredictionResults = ({ results, opinions }) => {
               </div>
               <div style={{ flex: '1' }}>
                 <ProgressBar style={{ height: '30px' }}>
-                  {selectedProbabilities[index].map((prob, i) => (
+                  {(selectedProbabilities[index] ?? []).map((prob, i) => (
                     <ProgressBar
                       now={prob * 100}
                       key={i}
@@ -126,11 +137,11 @@ const PredictionResults = ({ results, opinions }) => {
                         height: '30px',
                         fontWeight: 'bold',
                       }}
-                      title={`ODS ${i + 3}: ${(prob * 100).toFixed(2)}%`}
-                      label={`${i + 3}`}
+                      title={`ODS ${classes[i]}: ${(prob * 100).toFixed(2)}%`}
+                      label={`${classes[i]}`}
                     >
                       <span style={{ color: 'white', fontWeight: 'bold' }}>
-                        {i + 3}
+                        {classes[i]}
                       </span>
                     </ProgressBar>
                   ))}

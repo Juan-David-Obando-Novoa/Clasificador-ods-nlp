@@ -190,6 +190,10 @@ Además de la exactitud, se corrigieron cuatro defectos del código anterior.
 
 **4. Las métricas de reentrenamiento no eran comparables.** Se calculaban sobre una partición del propio lote de reentrenamiento, distinta en cada llamada, de modo que dos ejecuciones no se podían comparar entre sí. Ahora todas las versiones se evalúan contra el mismo `data/holdout.csv`, que nunca entra al entrenamiento.
 
+**5. Las tildes rompían la predicción en entradas escritas a mano.** El corpus contiene *género* y *educación* con tilde, así que una consulta escrita como `genero` o `educacion` no coincidía con ningún término del vocabulario: el vector TF-IDF salía vacío y el modelo respondía con su sesgo por defecto (ODS 3) en lugar de con una predicción real. `género` daba ODS 5 con probabilidad 1.00 y `genero` daba ODS 3. La normalización ahora elimina tildes —conservando la eñe, que es una letra y no un acento— de modo que ambas formas colapsan en el mismo término. Medido, el F1 no cambia: las tildes no aportaban capacidad discriminativa, solo fragilidad frente a lo que escribe un usuario.
+
+**6. La interfaz reventaba al agregar una opinión después de predecir.** `PredictionResults` paginaba sobre la lista de opiniones, pero las predicciones seguían siendo las del lote anterior; al llegar a un índice sin predicción, `undefined.map()` tumbaba la página. Ahora agregar o borrar una opinión descarta los resultados anteriores, y el componente solo renderiza las opiniones que tienen predicción. Las etiquetas de la barra de probabilidades se toman de `results.classes` en vez de estar fijas como `i + 3`.
+
 También: el orden de limpieza estaba invertido (se eliminaba la puntuación antes de reparar el mojibake, partiendo secuencias que ya no se podían reemplazar), la tabla de reemplazos convertía *ñ* en *n* mientras restauraba las demás tildes, y `LinearSVC` sustituye a `SVC(kernel='linear')`, que es órdenes de magnitud más lento sobre el mismo problema.
 
 En el notebook de la etapa 1, el `fit_transform` del vectorizador se hacía sobre el dataset completo antes de dividir en entrenamiento y prueba, lo que filtra información del conjunto de prueba al vocabulario y a los pesos IDF. Medido, infla el resultado apenas 0.12 puntos, pero es incorrecto: en el código nuevo el vectorizador se ajusta dentro del `Pipeline`, de modo que la validación cruzada lo reajusta en cada fold.
@@ -216,4 +220,5 @@ etapa2/
 ## Notas
 
 - El dataset viene con mojibake (`nÃºmero` en lugar de `número`): se guardó en UTF-8 y se leyó como Latin-1. `preprocessing.fix_encoding()` lo repara antes de cualquier otra limpieza.
+- Un modelo serializado con `joblib` no es portable entre versiones de scikit-learn. Si al arrancar aparece un `AttributeError` sobre un atributo que el estimador no tiene, basta con volver a ejecutar `python train.py` en el entorno local.
 - `data/` incluye el dataset para que el proyecto sea reproducible de principio a fin.

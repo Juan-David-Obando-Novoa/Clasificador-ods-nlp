@@ -11,6 +11,7 @@ texto de forma distinta, y es imposible limpiar dos veces el mismo texto.
 
 import re
 import string
+import unicodedata
 
 try:
     import ftfy
@@ -44,10 +45,36 @@ def fix_encoding(text: str) -> str:
     return text
 
 
+def strip_accents(text: str) -> str:
+    """
+    Elimina tildes conservando la eñe.
+
+    Sin esto, "genero" escrito por un usuario no coincide con "género" del
+    corpus: el término queda fuera del vocabulario, el vector TF-IDF sale
+    vacío y el modelo responde con su sesgo por defecto en lugar de con una
+    predicción real. La eñe se preserva porque es una letra distinta, no un
+    acento: "año" y "ano" no son la misma palabra.
+    """
+    text = text.replace("ñ", "\x00").replace("Ñ", "\x01")
+    text = "".join(
+        c for c in unicodedata.normalize("NFD", text)
+        if unicodedata.category(c) != "Mn"
+    )
+    return text.replace("\x00", "ñ").replace("\x01", "Ñ")
+
+
 def normalize_text(text: str) -> str:
-    """Pipeline de normalización completo: mojibake → minúsculas → limpieza."""
+    """
+    Pipeline de normalización completo.
+
+    mojibake → minúsculas → sin tildes → sin puntuación ni dígitos.
+
+    Al vivir dentro del TfidfVectorizer, se aplica igual al entrenar que al
+    predecir, así que el vocabulario y la consulta siempre coinciden.
+    """
     text = fix_encoding(str(text))
     text = text.lower()
+    text = strip_accents(text)
     text = _PUNCT.sub(" ", text)
     text = _DIGITS.sub(" ", text)
     return _SPACES.sub(" ", text).strip()
