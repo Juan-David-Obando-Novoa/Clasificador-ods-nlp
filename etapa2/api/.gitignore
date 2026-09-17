@@ -1,5 +1,12 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
 .venv/
+model_logs.log
+
+# Modelos versionados: solo se versiona en git el activo.
+models/modelo_v*.joblib
+!models/modelo_v1.joblib
+
+# Datos acumulados por el endpoint de reentrenamiento (locales, no del repo)
+data/incremental.csv
